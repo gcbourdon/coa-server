@@ -1,0 +1,16 @@
+# Binaries
+coa-server
+*.exe
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
