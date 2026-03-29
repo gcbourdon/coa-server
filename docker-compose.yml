@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: coa
+      POSTGRES_USER: coa
+      POSTGRES_PASSWORD: coa
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  coa-server:
+    build:
+      # Context is the parent directory so the build can access cards/
+      # Once cards/ lives inside this repo, change context to .
+      context: ..
+      dockerfile: coa-server/Dockerfile
+    environment:
+      ADDR: ":8080"
+      DATABASE_URL: "postgres://coa:coa@postgres:5432/coa"
+      CARDS_DIR: "/app/cards"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

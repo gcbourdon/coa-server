@@ -28,6 +28,9 @@ func StartReadyPhase(gs *GameState) {
 		player.AP = MaxAP
 	}
 
+	// Draw 1 card for the active player.
+	DrawCards(player, 1)
+
 	gs.Phase = PhaseMain
 }
 

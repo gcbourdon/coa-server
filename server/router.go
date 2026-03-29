@@ -38,16 +38,16 @@ func NewRouter(hub *Hub) http.Handler {
 		})
 
 		r.Route("/decks", func(r chi.Router) {
-			r.Get("/", notImplemented)
+			r.Get("/", HandleListDecks)
 			r.Post("/", notImplemented)
-			r.Get("/{deckId}", notImplemented)
+			r.Get("/{deckId}", HandleGetDeck)
 			r.Patch("/{deckId}", notImplemented)
 			r.Delete("/{deckId}", notImplemented)
 		})
 
 		r.Route("/cards", func(r chi.Router) {
-			r.Get("/", notImplemented)
-			r.Get("/{cardId}", notImplemented)
+			r.Get("/", HandleListCards)
+			r.Get("/{cardId}", HandleGetCard)
 		})
 	})
 

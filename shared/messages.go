@@ -13,6 +13,7 @@ const (
 	ActionJoinGame        = "JOIN_GAME"
 	ActionEndTurn         = "END_TURN"
 	ActionPlayCard        = "PLAY_CARD"
+	ActionPassPriority    = "PASS_PRIORITY"
 	ActionMoveConqueror   = "MOVE_CONQUEROR"
 	ActionInitiateCombat  = "INITIATE_COMBAT"
 	ActionAssignDefenders = "ASSIGN_DEFENDERS"

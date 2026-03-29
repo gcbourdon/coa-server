@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS deck_cards;
+DROP INDEX IF EXISTS idx_decks_user_id;
+DROP TABLE IF EXISTS decks;

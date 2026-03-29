@@ -51,7 +51,7 @@ func ResolveCombat(attacker *ConquerorInstance, defenders []*ConquerorInstance) 
 // ApplyCombatDamage mutates HP on the attacker and defenders based on a resolved CombatResult.
 // outgoingDistribution maps defender InstanceID → damage assigned to that defender.
 // The caller is responsible for ensuring the distribution sums to <= OutgoingDamage.
-// Returns a slice of destroyed unit InstanceIDs.
+// Returns a slice of destroyed conqueror InstanceIDs.
 func ApplyCombatDamage(
 	attacker *ConquerorInstance,
 	defenders []*ConquerorInstance,

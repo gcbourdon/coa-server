@@ -133,8 +133,19 @@ func (h *Hub) dispatch(session *Session, client *Client, msg shared.Message) {
 			session.SendTo(pi, rejectMsg("NOT_YOUR_TURN", "It is not your turn."))
 			return
 		}
+		if len(gs.Sequence) > 0 {
+			session.SendTo(pi, rejectMsg("SEQUENCE_NOT_EMPTY", "Resolve all cards on the sequence before ending your turn."))
+			return
+		}
 		game.EndTurn(gs)
 		broadcastState(session)
+
+	case shared.ActionPassPriority:
+		if err := game.PassPriority(gs, pi); err != nil {
+			session.SendTo(pi, rejectFromErr(err))
+			return
+		}
+		checkAndBroadcast(session)
 
 	case shared.ActionPlayCard:
 		var p shared.PlayCardPayload
@@ -146,11 +157,11 @@ func (h *Hub) dispatch(session *Session, client *Client, msg shared.Message) {
 			session.SendTo(pi, rejectFromErr(err))
 			return
 		}
-		if err := game.PlayConqueror(gs, pi, p.CardID, p.TargetCol, p.TargetRow); err != nil {
+		if err := game.QueuePlayCard(gs, pi, p.CardID, p.TargetCol, p.TargetRow); err != nil {
 			session.SendTo(pi, rejectMsg("INTERNAL_ERROR", err.Error()))
 			return
 		}
-		checkAndBroadcast(session)
+		broadcastState(session)
 
 	case shared.ActionMoveConqueror:
 		var p shared.MoveConquerorPayload

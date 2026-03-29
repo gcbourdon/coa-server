@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"coa-server/cards"
 
@@ -17,12 +18,17 @@ func NewGame(
 	deckP1, deckP2 []string,
 	structureIDsP1, structureIDsP2 [3]string,
 ) (*GameState, error) {
+	// Coin flip: randomly decide who goes first.
+	firstPlayer := PlayerIndex(rand.IntN(2) + 1) // 1 or 2
+
 	gs := &GameState{
 		GameID:      gameID,
-		CurrentTurn: Player1,
+		CurrentTurn: firstPlayer,
+		FirstPlayer: firstPlayer,
 		TurnNumber:  1,
 		Phase:       PhaseMain,
 		Winner:      0,
+		Sequence:    []SequenceItem{},
 	}
 
 	p1, err := buildPlayer(playerID1, Player1, deckP1, structureIDsP1[:])
@@ -37,10 +43,14 @@ func NewGame(
 	gs.Players[Player1-1] = p1
 	gs.Players[Player2-1] = p2
 
-	// Player1 starts with 3 AP; Player2 gains AP on their first turn.
-	gs.Player(Player1).AP = GainPerTurn
+	// Shuffle both decks and deal 5-card opening hands.
+	ShuffleDeck(gs.Player(Player1))
+	ShuffleDeck(gs.Player(Player2))
+	DrawCards(gs.Player(Player1), 5)
+	DrawCards(gs.Player(Player2), 5)
 
-	// TODO: draw opening hands once hand size rule is decided.
+	// The first player starts with 3 AP; the other gains AP on their first turn.
+	gs.Player(firstPlayer).AP = GainPerTurn
 
 	return gs, nil
 }

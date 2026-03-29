@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +12,9 @@ import (
 	"coa-server/db"
 	"coa-server/server"
 )
+
+//go:embed migrations/*.up.sql
+var migrationsFS embed.FS
 
 func main() {
 	addr := envOr("ADDR", ":8080")
@@ -20,7 +25,10 @@ func main() {
 	if err := cards.LoadAll(cardsRoot); err != nil {
 		log.Fatalf("loading cards: %v", err)
 	}
-	log.Printf("cards loaded from %s", cardsRoot)
+	if err := cards.LoadDecks(cardsRoot); err != nil {
+		log.Fatalf("loading decks: %v", err)
+	}
+	log.Printf("cards and decks loaded from %s", cardsRoot)
 
 	// Connect to PostgreSQL if a DSN is provided.
 	// In Phase 1 (engine-only testing) it's fine to omit DATABASE_URL.
@@ -30,6 +38,12 @@ func main() {
 		}
 		defer db.Close()
 		log.Println("connected to postgres")
+
+		migFS, _ := fs.Sub(migrationsFS, "migrations")
+		if err := db.Migrate(context.Background(), migFS); err != nil {
+			log.Fatalf("db migrate: %v", err)
+		}
+		log.Println("migrations applied")
 	} else {
 		log.Println("DATABASE_URL not set — running without database (game engine only)")
 	}
