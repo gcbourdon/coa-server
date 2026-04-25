@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"coa-server/cards"
+)
 
 // ValidationError is returned when an action fails validation.
 type ValidationError struct {
@@ -34,6 +38,14 @@ func ValidatePlayCard(gs *GameState, p PlayerIndex, cardInstanceID string, targe
 	}
 	if cardIdx == -1 {
 		return validationErr("CARD_NOT_IN_HAND", "That card is not in your hand.")
+	}
+
+	def, err := cards.GetCard(gs.Player(p).Hand[cardIdx].CardID)
+	if err != nil {
+		return validationErr("UNKNOWN_CARD", "Card definition not found.")
+	}
+	if gs.Player(p).AP < def.APCost {
+		return validationErr("INSUFFICIENT_AP", fmt.Sprintf("Not enough AP to play this card (costs %d, have %d).", def.APCost, gs.Player(p).AP))
 	}
 
 	if targetCol < 0 || targetCol > 2 || targetRow < 0 || targetRow > 3 {
@@ -86,8 +98,9 @@ func ValidateMoveConqueror(gs *GameState, p PlayerIndex, conquerorID string, toC
 	if totalDelta == 0 {
 		return validationErr("NO_MOVEMENT", "Conqueror must move at least one position.")
 	}
-	if totalDelta > c.CurrentSPD {
-		return validationErr("EXCEEDS_SPEED", fmt.Sprintf("This conqueror can move at most %d position(s) per action.", c.CurrentSPD))
+	if c.MovesUsed+totalDelta > c.CurrentSPD {
+		remaining := c.CurrentSPD - c.MovesUsed
+		return validationErr("EXCEEDS_SPEED", fmt.Sprintf("This conqueror can only move %d more position(s) this turn.", remaining))
 	}
 	// Conquerors cannot enter the opponent's base.
 	if toRow == Base(c.Owner.Opponent()) {
@@ -162,6 +175,9 @@ func ValidateAttackDeclaration(gs *GameState, p PlayerIndex, conquerorID string,
 
 // ValidateAssignDefenders checks that defender assignments are legal.
 func ValidateAssignDefenders(gs *GameState, p PlayerIndex, defenders []string, attackerID string) error {
+	if gs.Phase != PhaseCombat {
+		return validationErr("WRONG_PHASE", "Defenders can only be assigned during the Combat phase.")
+	}
 	for _, defID := range defenders {
 		d := findConqueror(gs, defID)
 		if d == nil {

@@ -115,6 +115,11 @@ func (h *Hub) handleJoin(conn *websocket.Conn, gameID string, payload json.RawMe
 	session.Clients[playerIndex-1] = client
 	go client.WritePump()
 
+	// Both players are now connected — run the coin flip, shuffle, and opening deal.
+	if session.Clients[0] != nil && session.Clients[1] != nil {
+		game.StartGame(session.State)
+	}
+
 	broadcastState(session)
 	return client
 }
@@ -198,6 +203,7 @@ func (h *Hub) dispatch(session *Session, client *Client, msg shared.Message) {
 		}
 
 		session.PendingCombat = &PendingCombat{Attackers: p.Attackers}
+		session.State.Phase = game.PhaseCombat
 
 		session.SendTo(pi.Opponent(), mustMarshal(shared.Message{
 			Type: shared.EventWaitingForDefenders,
@@ -266,6 +272,9 @@ func (h *Hub) dispatch(session *Session, client *Client, msg shared.Message) {
 				}),
 			}))
 		}
+
+		// Combat is fully resolved — return to Main phase so the attacker can continue their turn.
+		session.State.Phase = game.PhaseMain
 		checkAndBroadcast(session)
 
 	default:
@@ -303,6 +312,7 @@ func checkAndBroadcast(session *Session) {
 	winner := game.CheckWinCondition(session.State)
 	if winner != 0 {
 		session.State.Winner = winner
+		session.State.Status = game.GameStatusFinished
 		session.Broadcast(mustMarshal(shared.Message{
 			Type: shared.EventGameOver,
 			Payload: mustMarshalRaw(shared.GameOverPayload{

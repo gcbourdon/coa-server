@@ -9,7 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// NewGame initialises a fresh GameState for two players.
+// NewGame creates a game session skeleton for two players and returns it in the
+// waiting state. No randomisation occurs here — call StartGame once both players
+// are connected to perform the coin flip, shuffle, and opening deal.
+//
 // deckP1/deckP2 are slices of card IDs representing each player's deck.
 // structureIDsP1/structureIDsP2 are three structure card IDs in column order [col0, col1, col2].
 func NewGame(
@@ -18,17 +21,12 @@ func NewGame(
 	deckP1, deckP2 []string,
 	structureIDsP1, structureIDsP2 [3]string,
 ) (*GameState, error) {
-	// Coin flip: randomly decide who goes first.
-	firstPlayer := PlayerIndex(rand.IntN(2) + 1) // 1 or 2
-
 	gs := &GameState{
-		GameID:      gameID,
-		CurrentTurn: firstPlayer,
-		FirstPlayer: firstPlayer,
-		TurnNumber:  1,
-		Phase:       PhaseMain,
-		Winner:      0,
-		Sequence:    []SequenceItem{},
+		GameID:   gameID,
+		Status:   GameStatusWaiting,
+		Phase:    PhaseMain, // will be overwritten when StartGame is called
+		Winner:   0,
+		Sequence: []SequenceItem{},
 	}
 
 	p1, err := buildPlayer(playerID1, Player1, deckP1, structureIDsP1[:])
@@ -43,7 +41,19 @@ func NewGame(
 	gs.Players[Player1-1] = p1
 	gs.Players[Player2-1] = p2
 
-	// Shuffle both decks and deal 5-card opening hands.
+	return gs, nil
+}
+
+// StartGame initialises the game once both players are connected.
+// It performs the coin flip, shuffles both decks, deals opening hands, and
+// transitions the status from GameStatusWaiting to GameStatusInProgress.
+func StartGame(gs *GameState) {
+	firstPlayer := PlayerIndex(rand.IntN(2) + 1) // 1 or 2
+	gs.CurrentTurn = firstPlayer
+	gs.FirstPlayer = firstPlayer
+	gs.TurnNumber = 1
+	gs.Phase = PhaseMain
+
 	ShuffleDeck(gs.Player(Player1))
 	ShuffleDeck(gs.Player(Player2))
 	DrawCards(gs.Player(Player1), 5)
@@ -52,7 +62,7 @@ func NewGame(
 	// The first player starts with 3 AP; the other gains AP on their first turn.
 	gs.Player(firstPlayer).AP = GainPerTurn
 
-	return gs, nil
+	gs.Status = GameStatusInProgress
 }
 
 func buildPlayer(playerID string, p PlayerIndex, deckCardIDs []string, structureIDs []string) (Player, error) {

@@ -17,6 +17,7 @@ func StartReadyPhase(gs *GameState) {
 			if c != nil && c.Owner == p {
 				c.IsWeary = false
 				c.SteadfastUsed = false
+				c.MovesUsed = 0
 			}
 		}
 	}

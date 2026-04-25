@@ -67,10 +67,12 @@ func PlayConqueror(gs *GameState, p PlayerIndex, cardInstanceID string, targetCo
 // Assumes validation has already passed.
 func MoveConqueror(gs *GameState, p PlayerIndex, conquerorID string, toCol, toRow int) {
 	c := findConqueror(gs, conquerorID)
+	dist := abs(toCol-c.Col) + abs(toRow-c.Row)
 	gs.Board.Grid[c.Col][c.Row] = nil
 	c.Col = toCol
 	c.Row = toRow
 	gs.Board.Grid[toCol][toRow] = c
+	c.MovesUsed += dist
 	gs.Player(p).AP--
 }
 
