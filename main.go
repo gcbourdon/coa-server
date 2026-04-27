@@ -19,7 +19,7 @@ var migrationsFS embed.FS
 func main() {
 	addr := envOr("ADDR", ":8080")
 	dbDSN := envOr("DATABASE_URL", "")
-	cardsRoot := envOr("CARDS_DIR", "../cards")
+	cardsRoot := envOr("CARDS_DIR", "../coa-cards")
 
 	// Load card definitions from the cards/ data directory.
 	if err := cards.LoadAll(cardsRoot); err != nil {

@@ -46,10 +46,8 @@ func QueuePlayCard(gs *GameState, p PlayerIndex, cardInstanceID string, targetCo
 	}
 
 	gs.Sequence = append(gs.Sequence, item)
-	// The act of playing counts as the player's own pass — they've declared their intent.
-	// Start at 1 so the opponent only needs to pass once to resolve, not twice.
-	gs.PassCount = 1
-	gs.PriorityPlayer = p.Opponent()
+	gs.PassCount = 0
+	gs.PriorityPlayer = p
 
 	return nil
 }
